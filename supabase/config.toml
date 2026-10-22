@@ -1,0 +1,72 @@
+
+[functions.zoho-vendors]
+enabled = true
+verify_jwt = true
+import_map = "./functions/zoho-vendors/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/zoho-vendors/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/zoho-vendors/*.html" ]
+
+[functions.zoho-items]
+enabled = true
+verify_jwt = true
+import_map = "./functions/zoho-items/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/zoho-items/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/zoho-items/*.html" ]
+
+[functions.zoho-upload-po]
+enabled = true
+verify_jwt = true
+import_map = "./functions/zoho-upload-po/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/zoho-upload-po/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/zoho-upload-po/*.html" ]
+
+[functions.zoho-attach-files]
+enabled = true
+verify_jwt = true
+import_map = "./functions/zoho-attach-files/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/zoho-attach-files/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/zoho-attach-files/*.html" ]
+
+[functions.upsert-farmer]
+enabled = true
+verify_jwt = true
+import_map = "./functions/upsert-farmer/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/upsert-farmer/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/upsert-farmer/*.html" ]
+
+[functions.purchase-order-write]
+enabled = true
+verify_jwt = true
+import_map = "./functions/purchase-order-write/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/purchase-order-write/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/purchase-order-write/*.html" ]
+
+[functions.zoho-books-connect-init]
+verify_jwt = true
+
+[functions.zoho-books-callback]
+verify_jwt = false

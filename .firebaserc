@@ -1,0 +1,8 @@
+{
+  "projects": {
+    "default": "mulyam-purchase",
+    "purchase": "mulyam-purchase"
+  },
+  "targets": {},
+  "etags": {}
+}
