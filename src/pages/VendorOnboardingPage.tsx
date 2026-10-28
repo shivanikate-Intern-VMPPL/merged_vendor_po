@@ -50,7 +50,7 @@ export default function VendorOnboardingPage() {
             max-width: 100% !important;
             width: 100% !important;
           }
-          #vo-root .dashboard-header .menu-btn {
+          #vo-root .dashboard-main > .topbar .mobile-menu-btn {
             display: none !important;
           }
           #vo-root .container {

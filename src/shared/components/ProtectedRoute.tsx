@@ -1,4 +1,4 @@
-
+﻿
 import type { ReactNode } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuthContext } from '../../features/auth/AuthContext'
@@ -43,18 +43,18 @@ export function ProtectedRoute({
     )
   }
 
-  // Not logged in — redirect to login
+  // Not logged in â€” redirect to login
   if (!user) {
     return <Navigate to="/" replace />
   }
 
-  // Role is pending — show waiting screen
+  // Role is pending â€” show waiting screen
   if (profile?.role === 'pending') {
     return <PendingScreen />
   }
 
-  // Admin bypasses all restrictions
-  if (profile?.role === 'admin') {
+  // Admin bypasses all restrictions (case-insensitive check)
+  if ((profile?.role as string)?.toLowerCase() === 'admin') {
     return <>{children}</>
   }
 

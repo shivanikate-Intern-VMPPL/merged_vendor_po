@@ -1,4 +1,4 @@
-/*import { supabase } from "../../../supabase.js";
+﻿/*import { supabase } from "../../../supabase.js";
 
 export interface ZohoVendor {
   id: number;
@@ -174,6 +174,7 @@ export async function uploadVendorsToZoho(
             .update({
               zoho_contact_id: res.zoho_contact_id,
               zoho_upload_status: "uploaded",
+              zoho_uploaded_at: new Date().toISOString(),
             })
             .eq("id", res.vendor_id);
         } catch (dbErr) {

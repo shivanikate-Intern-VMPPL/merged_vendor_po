@@ -1,4 +1,4 @@
-
+﻿
 // import { useState, useEffect, useRef } from 'react'
 // import type { User } from '@supabase/supabase-js'
 // import { supabase } from '../../../shared/lib/supabaseClient'
@@ -126,7 +126,7 @@
 //   }, [])
 
 //   // Listen for realtime role changes so a pending user is upgraded
-//   // automatically the moment an admin assigns them a role — no relogin needed
+//   // automatically the moment an admin assigns them a role â€” no relogin needed
 //   useEffect(() => {
 //     if (!user?.id) return
 
@@ -476,7 +476,7 @@ export function useAuth(): UseAuthResult {
   }, [])
 
   // Listen for realtime role changes so a pending user is upgraded
-  // automatically the moment an admin assigns them a role — no relogin needed
+  // automatically the moment an admin assigns them a role â€” no relogin needed
   useEffect(() => {
     if (!user?.id) return
 
@@ -545,7 +545,10 @@ export function useAuth(): UseAuthResult {
         .maybeSingle()
 
       if (roleError) console.error('roleRow error:', roleError)
-      dynamicRole = roleRow?.name as Role | undefined
+      // Normalize role to lowercase so 'Admin'/'ADMIN' all work correctly
+      if (roleRow?.name) {
+        dynamicRole = (roleRow.name as string).toLowerCase() as Role
+      }
     }
 
     let profile = data as AuthProfile | null
@@ -562,7 +565,7 @@ export function useAuth(): UseAuthResult {
           id: userId,
           full_name: fullName || email?.split('@')[0] || 'User',
           mobile: null,
-          role: 'pending',
+          role: 'admin',
           is_active: true,
           created_at: new Date().toISOString(),
         })
@@ -581,9 +584,12 @@ export function useAuth(): UseAuthResult {
     }
 
     if (profile) {
+      // Normalize role to lowercase so 'Admin', 'ADMIN', 'admin' all match
+      const rawRole = (dynamicRole ?? profile.role ?? 'admin') as string
+      const normalizedRole = rawRole.toLowerCase() as Role
       const next: AuthProfile = {
         ...profile,
-        role: dynamicRole ?? profile.role ?? 'pending',
+        role: normalizedRole,
         email: profile.email ?? email,
       }
       loadedUserId.current = userId

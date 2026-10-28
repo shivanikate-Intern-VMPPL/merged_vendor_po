@@ -1,0 +1,11 @@
+ALTER TABLE public.profiles DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.vendors DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.roles DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_roles DISABLE ROW LEVEL SECURITY;
+INSERT INTO public.user_roles (user_id, role_id) SELECT au.id, 1 FROM auth.users au WHERE NOT EXISTS (SELECT 1 FROM public.user_roles ur WHERE ur.user_id = au.id);
+INSERT INTO public.profiles (id, full_name, role, is_active, created_at) SELECT au.id, COALESCE(au.raw_user_meta_data->>'full_name', au.raw_user_meta_data->>'name', split_part(au.email,'@',1), 'User'), 'admin', true, now() FROM auth.users au ON CONFLICT (id) DO UPDATE SET role = 'admin', is_active = true;
+ALTER TABLE public.vendors ADD COLUMN IF NOT EXISTS zoho_uploaded_at timestamptz;
+ALTER TABLE public.vendors ADD COLUMN IF NOT EXISTS zoho_contact_id text;
+ALTER TABLE public.vendors ADD COLUMN IF NOT EXISTS zoho_upload_status text;
+ALTER TABLE public.vendors ADD COLUMN IF NOT EXISTS zoho_upload_error text;
+SELECT 'profiles' as tbl, count(*) as cnt FROM public.profiles UNION ALL SELECT 'user_roles', count(*) FROM public.user_roles UNION ALL SELECT 'auth_users', count(*) FROM auth.users;

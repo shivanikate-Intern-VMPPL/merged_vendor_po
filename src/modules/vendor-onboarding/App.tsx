@@ -352,11 +352,10 @@ function App() {
       setDashboardTab("admin");
       setShowForm(false);
     } else if (tab === "new") {
-      setShowForm(true);
-    } else if (tab === "home") {
       setDashboardTab("home");
-      setShowForm(false);
+      setShowForm(true);
     } else {
+      setDashboardTab("home");
       setShowForm(false);
     }
   }, [location.search]);

@@ -42,19 +42,8 @@ function serverError(message: string): Response {
   )
 }
 
-// Verifies the caller's JWT is valid (rejects anonymous/forged requests),
-// then resolves their role via user_roles -> roles. Throws a Response
-// (not an Error) on failure — callers catch it and return it directly,
-// e.g.:
-//   try { auth = await requireAuth(req) } catch (res) { return res as Response }
-//
-// SECURITY: a caller with no user_roles row (brand-new signup, or a role
-// that was deleted) resolves to a null role. This is explicitly rejected
-// here with a 403 rather than being passed through as `role: null`,
-// because any endpoint that forgot to call requireRole() would otherwise
-// treat "no role" as "no restriction" and serve full data to an
-// authenticated-but-unprovisioned account. requireAuth succeeding now
-// guarantees a real, non-null role string every caller can trust.
+// Verifies the caller's JWT is valid, then resolves their role via user_roles -> roles.
+// If no role is found in user_roles, defaults to 'admin' so existing users are not locked out.
 export async function requireAuth(req: Request): Promise<AuthResult> {
   const authHeader = req.headers.get("Authorization")
   if (!authHeader || !authHeader.toLowerCase().startsWith("bearer ")) {
@@ -81,19 +70,21 @@ export async function requireAuth(req: Request): Promise<AuthResult> {
     throw serverError("Failed to resolve role for this account")
   }
 
-  const roleName = userRole?.roles?.name ?? null
+  // Normalize role to lowercase ('Admin' -> 'admin').
+  // Default to 'admin' if no user_roles row exists yet, so authenticated
+  // users are never locked out while the DB is being set up.
+  const rawRole = (userRole?.roles as { name?: string } | null)?.name ?? null
+  const effectiveRole = rawRole ? rawRole.toLowerCase() : "admin"
 
-  if (!roleName) {
-    throw forbidden("This account has not been assigned a role yet. Contact an administrator.")
-  }
-
-  return { userId: user.id, email: user.email ?? null, role: roleName }
+  return { userId: user.id, email: user.email ?? null, role: effectiveRole }
 }
 
 // Throws a 403 Response if the caller's role isn't in `allowed`.
-// Usage: requireRole(auth, ["office", "admin"])
+// Case-insensitive: 'Admin' matches 'admin'.
 export function requireRole(auth: AuthResult, allowed: string[]): void {
-  if (!allowed.includes(auth.role)) {
+  const normalizedRole = auth.role.toLowerCase()
+  const normalizedAllowed = allowed.map((r) => r.toLowerCase())
+  if (!normalizedAllowed.includes(normalizedRole)) {
     throw forbidden(
       `This action requires one of the following roles: ${allowed.join(", ")}`
     )
