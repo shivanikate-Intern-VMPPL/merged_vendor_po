@@ -10,7 +10,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 
 import {
-  AccountCircle,
   Add,
   Checklist,
   Home,
@@ -180,8 +179,6 @@ function App() {
 
   const [dashboardTab, setDashboardTab] =
     useState<DashboardTabType>("home");
-
-  const [profileOpen, setProfileOpen] = useState(false);
 
   const [loading, setLoading] = useState<boolean>(false);
 
@@ -725,8 +722,6 @@ function App() {
     await supabase.auth.signOut();
 
     setUser(null);
-
-    setProfileOpen(false);
 
     window.location.href = "/";
   };
@@ -1687,40 +1682,6 @@ function App() {
             </p>
           </div>
 
-          <div className="profile-menu">
-            <button
-              type="button"
-              className="profile-icon-btn"
-              aria-label="Open profile menu"
-              onClick={() =>
-                setProfileOpen(
-                  (open) =>
-                    !open
-                )
-              }
-            >
-              <AccountCircle />
-            </button>
-
-            {profileOpen && (
-              <div className="profile-dropdown">
-                <p>
-                  {user?.email}
-                </p>
-
-                <button
-                  type="button"
-                  onClick={
-                    signOut
-                  }
-                >
-                  <Logout fontSize="small" />
-
-                  Sign Out
-                </button>
-              </div>
-            )}
-          </div>
         </header>
 
         {children}
