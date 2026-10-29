@@ -369,10 +369,34 @@ import { fetchZohoVendors } from '../../purchase-orders/api/zohoApi';
 
 const PURCHASE_ORDER_WRITE_FN = 'purchase-order-write';
 
+function isUnauthorizedFunctionError(error: unknown): boolean {
+  if (!(error instanceof Error) || !('context' in error)) return false;
+  const context = error.context;
+  return context instanceof Response && context.status === 401;
+}
+
 async function callPurchaseOrderWrite<T = any>(action: string, payload: Record<string, any>): Promise<T> {
-  const { data, error } = await supabase.functions.invoke(PURCHASE_ORDER_WRITE_FN, {
+  const invoke = () => supabase.functions.invoke(PURCHASE_ORDER_WRITE_FN, {
     body: { action, ...payload },
   });
+  let result = await invoke();
+
+  if (result.error && isUnauthorizedFunctionError(result.error)) {
+    const { data: sessionData, error: refreshError } =
+      await supabase.auth.refreshSession();
+
+    if (refreshError) {
+      throw new Error(`Your session expired and could not be refreshed: ${refreshError.message}`);
+    }
+
+    if (!sessionData.session) {
+      throw new Error('Your session expired. Please sign in again.');
+    }
+
+    result = await invoke();
+  }
+
+  const { data, error } = result;
 
   if (error) {
     let failureReason = `Failed to ${action}`;

@@ -1654,20 +1654,19 @@ function App() {
           </button>
 
           <div>
-            <h2>
-              {showForm
-                ? "Vendor Form"
-                : dashboardTab ===
-                  "home"
-                ? "Home"
-                : dashboardTab ===
-                  "approve"
-                ? "Approve Forms"
-                : dashboardTab ===
-                  "history"
-                ? "Approval History"
-                : "Manage Users & Roles"}
-            </h2>
+            {(showForm || dashboardTab !== "approve") && (
+              <h2>
+                {showForm
+                  ? "Vendor Form"
+                  : dashboardTab ===
+                    "home"
+                  ? "Home"
+                  : dashboardTab ===
+                    "history"
+                  ? "Approval History"
+                  : "Manage Users & Roles"}
+              </h2>
+            )}
 
             <p>
               {dashboardTab ===

@@ -10,6 +10,11 @@
  * are redirected here via the path alias defined in tsconfig.app.json.
  */
 import { createClient } from '@supabase/supabase-js'
+import {
+  supabase as sharedSupabase,
+  supabaseAnonKey as sharedSupabaseAnonKey,
+  supabaseUrl as sharedSupabaseUrl,
+} from '../../shared/lib/supabaseClient'
 
 const supabaseUrl =
   (import.meta.env.VITE_VO_SUPABASE_URL as string) ||
@@ -19,4 +24,8 @@ const supabaseKey =
   (import.meta.env.VITE_VO_SUPABASE_ANON_KEY as string) ||
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im93bHpma3FwdHF1aWJxdHZ6dHFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0NTQxMDYsImV4cCI6MjA5NjAzMDEwNn0.vhVZKWcc4HQC0BeNxxq6YkL7blSfwytVaCc_G4KKTTw'
 
-export const supabase = createClient(supabaseUrl, supabaseKey)
+export const supabase =
+  supabaseUrl === sharedSupabaseUrl &&
+  supabaseKey === sharedSupabaseAnonKey
+    ? sharedSupabase
+    : createClient(supabaseUrl, supabaseKey)
