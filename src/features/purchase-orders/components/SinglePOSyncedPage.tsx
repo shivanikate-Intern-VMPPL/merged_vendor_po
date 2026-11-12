@@ -183,6 +183,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { Layout } from '../../../shared/components/Layout'
 import { usePurchaseOrders } from '../../purchase-planning/hooks/usePurchaseOrders'
 import { printReceipt, printAllReceipts } from '../../purchase-planning/utils/printReceipt'
+import { WhatsAppStatusBadge } from './WhatsAppStatusBadge'
 import { deletePurchaseOrder } from '../api/purchaseOrdersApi'
 
 // Single POs are numbered like PO261007001 (letters PO + digits only).
@@ -336,6 +337,7 @@ export default function SinglePOSyncedPage() {
                   </Box>
                   <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
                     <Chip label="Synced to Zoho" color="success" size="small" />
+                    <WhatsAppStatusBadge poId={po.id} poNumber={po.po_number} />
                     <Button
                       size="small"
                       variant="outlined"

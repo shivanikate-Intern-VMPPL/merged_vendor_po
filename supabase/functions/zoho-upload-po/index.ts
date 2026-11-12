@@ -1781,6 +1781,23 @@ serve(async (req) => {
       console.error("PO was created in Zoho but the app record could not be updated:", updateError)
     }
 
+    // Phase 3: Trigger WhatsApp notification to vendor (non-blocking, never breaks sync)
+    try {
+      const functionUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/whatsapp-send-po`
+      fetch(functionUrl, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ po_id }),
+      }).catch((dispatchErr) => {
+        console.warn("[WhatsApp Dispatch Warning] Asynchronous send failed to initiate:", dispatchErr)
+      })
+    } catch (waErr) {
+      console.warn("[WhatsApp Dispatch Error] Could not trigger notification:", waErr)
+    }
+
     return json({
       success: true,
       zoho_po_id: zohoPoId,

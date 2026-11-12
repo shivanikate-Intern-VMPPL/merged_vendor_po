@@ -24,6 +24,7 @@ import { usePurchaseOrders } from './hooks/usePurchaseOrders';
 import { useDeletePurchaseOrder } from './hooks/useDeletePurchaseOrder';
 
 import { ROUTES } from '../../app/config/constants';
+import { WhatsAppStatusBadge } from '../purchase-orders/components/WhatsAppStatusBadge';
 import { Layout } from '../../shared/components/Layout';
 
 import {
@@ -541,6 +542,8 @@ export default function PurchaseOrdersSyncedPage() {
                       fontWeight: 600,
                     }}
                   />
+
+                  <WhatsAppStatusBadge poId={po.id} poNumber={po.po_number} />
 
 
                   <Button

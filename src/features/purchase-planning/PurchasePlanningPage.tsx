@@ -471,11 +471,17 @@
 import { useMemo, useState } from 'react';
 import {
   Box,
-  // Button
+  Button,
   Stack,
   Typography,
   Alert,
 } from '@mui/material';
+
+import { BulkPOUploadModal } from './components/BulkPOUploadModal';
+import { BulkPOPreviewDialog } from './components/BulkPOPreviewDialog';
+import { generateBulkPOTemplate } from './utils/bulkPOValidation';
+import type { ValidatedBulkRow, ActiveVendor } from './utils/bulkPOValidation';
+import { DownloadIcon, UploadIcon } from '../../shared/components/icons';
 
 import { Layout } from '../../shared/components/Layout';
 import { PurchasePlanningStats } from './components/PurchasePlanningStats';
@@ -490,15 +496,11 @@ import { useUpdateItemDetails } from './hooks/useUpdateItemDetails';
 import { useAddItem } from './hooks/useAddItem';
 import { useDeleteItem } from './hooks/useDeleteItem';
 import { useGeneratePurchaseOrders } from './hooks/useGeneratePurchaseOrders';
-import { useItemCatalog, type ItemCatalogEntry } from './hooks/useItemCatalog';
+import { isEligibleCatalogItem, useItemCatalog } from './hooks/useItemCatalog';
 
 import type { Item } from '../../shared/types/domain';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../app/config/constants';
-
-function isEligibleBulkItem(item: ItemCatalogEntry) {
-  return item.active && item.item_name.toLowerCase().includes('bulk');
-}
 
 export default function PurchasePlanningPage() {
   const {
@@ -509,7 +511,7 @@ export default function PurchasePlanningPage() {
 
   const { data: catalog = [], isLoading: catalogLoading, error: catalogError } = useItemCatalog();
   const items = useMemo(() => {
-    const eligibleCatalog = catalog.filter(isEligibleBulkItem);
+    const eligibleCatalog = catalog.filter(isEligibleCatalogItem);
     const allowedZohoIds = new Set(eligibleCatalog.map((item) => item.zoho_item_id));
     const allowedItemNames = new Set(eligibleCatalog.map((item) => item.item_name.toLowerCase()));
 
@@ -536,6 +538,90 @@ export default function PurchasePlanningPage() {
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Bulk PO Upload & Preview state
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [isPreviewDialogOpen, setIsPreviewDialogOpen] = useState(false);
+  const [parsedBulkRows, setParsedBulkRows] = useState<ValidatedBulkRow[]>([]);
+  const [isLegacySheet, setIsLegacySheet] = useState(false);
+  const [isSubmittingBulk, setIsSubmittingBulk] = useState(false);
+
+  const handleDownloadTemplate = () => {
+    try {
+      const templateData = generateBulkPOTemplate(vendors as any, catalog);
+      const blob = new Blob([templateData as BlobPart], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Bulk_PO_Upload_Template_${new Date().toISOString().slice(0, 10)}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setErrorMessage('Failed to generate template file. Please try again.');
+    }
+  };
+
+  const handleBulkParsed = (result: { rows: ValidatedBulkRow[]; isLegacyTemplate: boolean }) => {
+    setParsedBulkRows(result.rows);
+    setIsLegacySheet(result.isLegacyTemplate);
+    setIsPreviewDialogOpen(true);
+  };
+
+  const handleConfirmGenerateBulk = async (readyRows: ValidatedBulkRow[], isDraftOnly: boolean) => {
+    setIsSubmittingBulk(true);
+    setErrorMessage(null);
+
+    try {
+      const itemsToCreate: Item[] = readyRows.map((r) => ({
+        id: crypto.randomUUID(),
+        item_name: r.resolvedItemName || r.raw.article || 'Item',
+        required_qty: r.resolvedQty,
+        unit: r.resolvedUnit || 'Kg',
+        vendor_id: r.resolvedVendorId,
+        rate: r.resolvedRate,
+        zoho_item_id: r.resolvedItemId,
+        vendor_name: r.resolvedVendorName,
+        status: 'assigned',
+      }));
+
+      // Combine vendors list to ensure all resolved vendors have their names mapped
+      const vendorMap = new Map<string, any>();
+      for (const v of vendors) {
+        vendorMap.set(v.id, v);
+      }
+      for (const r of readyRows) {
+        if (r.resolvedVendorId && !vendorMap.has(r.resolvedVendorId)) {
+          vendorMap.set(r.resolvedVendorId, {
+            id: r.resolvedVendorId,
+            name: r.resolvedVendorName || 'Vendor ' + r.resolvedVendorId,
+          });
+        }
+      }
+
+      await generateOrders.mutateAsync({
+        items: itemsToCreate,
+        vendors: Array.from(vendorMap.values()),
+        isDraftOnly,
+      });
+
+      setIsPreviewDialogOpen(false);
+      await refetch();
+
+      if (isDraftOnly) {
+        navigate(ROUTES.PURCHASE_ORDERS_DRAFTS);
+      } else {
+        navigate(ROUTES.PURCHASE_ORDERS_REVIEW);
+      }
+    } catch (err) {
+      setErrorMessage((err as Error).message || 'Failed to create bulk purchase orders.');
+    } finally {
+      setIsSubmittingBulk(false);
+    }
+  };
 
   // Shown when saving a change fails. The list reloads, so the screen shows
   // the value that is really saved.
@@ -747,6 +833,38 @@ export default function PurchasePlanningPage() {
             Assign vendors to required items and automatically generate Purchase Orders.
           </Typography>
         </Box>
+
+        <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap" sx={{ mt: { xs: 1, md: 0 } }}>
+          <Button
+            variant="outlined"
+            color="inherit"
+            startIcon={<DownloadIcon fontSize="small" />}
+            onClick={handleDownloadTemplate}
+            sx={{
+              fontWeight: 700,
+              textTransform: 'none',
+              borderColor: 'divider',
+              '&:hover': { borderColor: 'primary.main', bgcolor: 'action.hover' },
+            }}
+          >
+            Download Template
+          </Button>
+
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<UploadIcon fontSize="small" />}
+            onClick={() => setIsUploadModalOpen(true)}
+            sx={{
+              fontWeight: 800,
+              textTransform: 'none',
+              bgcolor: '#062B59',
+              '&:hover': { bgcolor: '#041c3b' },
+            }}
+          >
+            Bulk PO Upload
+          </Button>
+        </Stack>
       </Stack>
 
       {errorMessage && (
@@ -934,6 +1052,25 @@ export default function PurchasePlanningPage() {
           Loading purchase data…
         </Typography>
       )}
+
+      {/* Bulk PO Upload & Preview Dialogs */}
+      <BulkPOUploadModal
+        open={isUploadModalOpen}
+        onClose={() => setIsUploadModalOpen(false)}
+        vendors={vendors as any}
+        items={catalog}
+        onParsed={handleBulkParsed}
+      />
+
+      <BulkPOPreviewDialog
+        open={isPreviewDialogOpen}
+        onClose={() => setIsPreviewDialogOpen(false)}
+        rows={parsedBulkRows}
+        isLegacyTemplate={isLegacySheet}
+        allVendors={vendors as any}
+        onConfirmGenerate={handleConfirmGenerateBulk}
+        isSubmitting={isSubmittingBulk}
+      />
     </Box>
     </Layout>
   );

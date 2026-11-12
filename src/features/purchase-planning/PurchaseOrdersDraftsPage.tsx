@@ -23,21 +23,12 @@ import { useDeletePurchaseOrder } from './hooks/useDeletePurchaseOrder';
 import { useUpdateDraftLineItem } from './hooks/useUpdateDraftLineItem';
 import { useUpdateDraftVendor } from './hooks/useUpdateDraftVendor';
 import { useVendors } from './hooks/useVendors';
-import { useItemCatalog, type ItemCatalogEntry } from './hooks/useItemCatalog';
+import { isEligibleCatalogItem, useItemCatalog } from './hooks/useItemCatalog';
 import { VendorSelect } from './components/VendorSelect';
 import { ItemSelect } from './components/ItemSelect';
 import { ROUTES } from '../../app/config/constants';
 import { Layout } from '../../shared/components/Layout';
 
-
-function isBulkItem(entry: ItemCatalogEntry) {
-  const name = entry.item_name?.toLowerCase() ?? '';
-
-  const looksInactive =
-    name.startsWith('inactive-') || entry.active === false;
-
-  return !looksInactive && name.includes('bulk');
-}
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-IN', {
@@ -76,7 +67,10 @@ export default function PurchaseOrdersDraftsPage() {
     }>;
   };
 
-  const catalog = rawCatalog.filter(isBulkItem);
+  const catalog = rawCatalog.filter((item) =>
+    !item.item_name.toLowerCase().startsWith('inactive-') &&
+    isEligibleCatalogItem(item)
+  );
 
   const convertDraft = useConvertDraftToOrder();
   const deleteOrder = useDeletePurchaseOrder();

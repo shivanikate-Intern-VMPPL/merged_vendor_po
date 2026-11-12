@@ -2024,7 +2024,12 @@ export function NewPurchaseForm() {
       const localItem = localItems.find((item) => item.zoho_item_id === zohoItem.zoho_item_id)
 
       if (localItem) {
-        result.push({ ...localItem, name: zohoItem.name })
+        result.push({
+          ...localItem,
+          name: zohoItem.name,
+          can_be_purchased: zohoItem.can_be_purchased,
+          can_be_sold: zohoItem.can_be_sold,
+        })
       } else {
         result.push({
           id: `zoho:${zohoItem.zoho_item_id}`,
@@ -2033,6 +2038,8 @@ export function NewPurchaseForm() {
           default_gst_percent: 0,
           zoho_item_id: zohoItem.zoho_item_id,
           purchase_rate: zohoItem.purchase_rate,
+          can_be_purchased: zohoItem.can_be_purchased,
+          can_be_sold: zohoItem.can_be_sold,
         })
       }
     }
@@ -2050,6 +2057,8 @@ export function NewPurchaseForm() {
       purchase_rate: matched.purchase_rate ?? 0,
       category: null,
       active: true,
+      can_be_purchased: matched.can_be_purchased ?? null,
+      can_be_sold: matched.can_be_sold ?? null,
     })
     if (resolved) {
       setLocalItems((prev) => [...prev, resolved])

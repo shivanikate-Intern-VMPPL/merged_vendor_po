@@ -35,3 +35,12 @@ export const ScaleIcon = ScaleIcon_;
 export const StorefrontIcon = StorefrontIcon_;
 export const PendingIcon = PendingIcon_;
 export const RocketIcon = RocketIcon_;
+import DownloadIcon_ from '@mui/icons-material/Download';
+import UploadIcon_ from '@mui/icons-material/Upload';
+import WarningIcon_ from '@mui/icons-material/Warning';
+import CheckIcon_ from '@mui/icons-material/Check';
+
+export const DownloadIcon = DownloadIcon_;
+export const UploadIcon = UploadIcon_;
+export const AlertTriangleIcon = WarningIcon_;
+export const CheckIcon = CheckIcon_;

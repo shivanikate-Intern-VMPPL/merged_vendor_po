@@ -523,7 +523,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 }
 
-const CACHE_KEY = "zoho_items_v2"
+const CACHE_KEY = "zoho_items_v4"
 const CACHE_TTL_MS = 60 * 60 * 1000            // keep the list for 1 hour
 const FORCE_REFRESH_MIN_AGE_MS = 2 * 60 * 1000 // ignore refresh clicks within 2 minutes
 
@@ -577,11 +577,27 @@ serve(async (req) => {
           params: { filter_by: "Status.Active" },
         })
 
+        const { error: syncError } = await supabaseAdmin.rpc("sync_zoho_item_flags", {
+          p_item_flags: rows.map((item: any) => ({
+            zoho_item_id: item.item_id,
+            can_be_purchased: item.can_be_purchased ?? null,
+            can_be_sold: item.can_be_sold ?? null,
+          })),
+        })
+        if (syncError) {
+          throw new Error(`Failed to sync Zoho item flags: ${syncError.message}`)
+        }
+
         const items = rows
-          .filter((item: any) =>
-            item.can_be_purchased === true &&
-            String(item.name ?? "").toLowerCase().includes("bulk")
-          )
+          .filter((item: any) => {
+            const isActive = item.status === "active"
+            const isLegacyBulkItem = String(item.name ?? "").toLowerCase().includes("bulk")
+            return isActive && (
+              isLegacyBulkItem ||
+              item.can_be_purchased === true ||
+              item.can_be_sold === true
+            )
+          })
           .map((item: any) => ({
             zoho_item_id: item.item_id,
             name: item.name,
@@ -590,6 +606,8 @@ serve(async (req) => {
             purchase_rate: item.purchase_rate ?? 0,
             category: item.category_name || null,
             active: item.status === "active",
+            can_be_purchased: item.can_be_purchased ?? null,
+            can_be_sold: item.can_be_sold ?? null,
           }))
 
         return {
@@ -600,6 +618,11 @@ serve(async (req) => {
             organizationCount,
             pages,
             totalFromZoho: rows.length,
+            previousBulkCount: rows.filter((item: any) =>
+              item.status === "active" &&
+              item.can_be_purchased === true &&
+              String(item.name ?? "").toLowerCase().includes("bulk")
+            ).length,
             afterFilter: items.length,
           },
         }

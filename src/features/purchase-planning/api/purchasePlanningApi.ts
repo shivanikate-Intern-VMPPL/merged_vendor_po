@@ -457,18 +457,42 @@ export async function fetchRequiredItems(): Promise<Item[]> {
 export async function fetchVendors(): Promise<Vendor[]> {
   const zohoVendors = await fetchZohoVendors(false);
 
+  // Also fetch mobile numbers from Supabase vendors table (onboarded vendors)
+  let sbVendors: any[] = [];
+  try {
+    const { data } = await supabase
+      .from('vendors')
+      .select('id, vendor_name, mobile, zoho_contact_id, status')
+      .not('zoho_contact_id', 'is', null);
+    sbVendors = data || [];
+  } catch (err) {
+    console.warn('Could not read Supabase vendors table for mobile numbers:', err);
+  }
+
+  const sbMobileByZohoId = new Map<string, string>();
+  for (const sv of sbVendors) {
+    if (sv.zoho_contact_id && sv.mobile) {
+      sbMobileByZohoId.set(sv.zoho_contact_id, sv.mobile);
+    }
+  }
+
   const seen = new Set<string>();
   const vendors: Vendor[] = [];
 
   for (const v of zohoVendors) {
     if (!v.zoho_contact_id || seen.has(v.zoho_contact_id)) continue;
     seen.add(v.zoho_contact_id);
+
+    // Prefer Supabase mobile if present, else Zoho phone
+    const mobile = sbMobileByZohoId.get(v.zoho_contact_id) || v.phone || null;
+
     vendors.push({
       id: v.zoho_contact_id,
       name: v.name,
       company_name: v.company_name,
       email: v.email,
       phone: v.phone,
+      mobile,
     } as unknown as Vendor);
   }
 

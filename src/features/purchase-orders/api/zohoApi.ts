@@ -3,7 +3,7 @@ import { supabase } from '../../../shared/lib/supabaseClient'
 
 // const VENDOR_LOCAL_CACHE_KEY = 'mulyam_zoho_vendors_cache'
 const VENDOR_LOCAL_CACHE_KEY = 'mulyam_zoho_vendors_cache_v2'
-const ITEM_LOCAL_CACHE_KEY = 'mulyam_zoho_items_cache_v2'
+const ITEM_LOCAL_CACHE_KEY = 'mulyam_zoho_items_cache_v4'
 const LOCAL_CACHE_TTL_MS = 4 * 60 * 60 * 1000 // 4 hours
 // const ITEM_LOCAL_CACHE_TTL_MS = 5 * 60 * 1000 // 5 minutes
 const ITEM_LOCAL_CACHE_TTL_MS = 30 * 60 * 1000 // 30 minutes
@@ -91,6 +91,8 @@ export interface ZohoItem {
   purchase_rate: number
   category: string | null
   active: boolean
+  can_be_purchased: boolean | null
+  can_be_sold: boolean | null
 }
 
 const inFlightVendorRequests = new Map<string, Promise<ZohoVendor[]>>()

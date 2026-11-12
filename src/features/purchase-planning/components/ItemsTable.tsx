@@ -637,7 +637,7 @@ import {
 import { SearchIcon, FilterIcon, RefreshIcon, CloseIcon } from '../../../shared/components/icons';
 import { VendorSelect } from './VendorSelect';
 import { ItemSelect } from './ItemSelect';
-import { useItemCatalog, type ItemCatalogEntry } from '../hooks/useItemCatalog';
+import { isEligibleCatalogItem, useItemCatalog, type ItemCatalogEntry } from '../hooks/useItemCatalog';
 import type { Item, Vendor } from '../../../shared/types/domain';
 
 const BASE_UNIT_OPTIONS = ['Kg', 'Units', 'Nos', 'g', 'L', 'Boxes', 'PKT', 'Dozen', 'Bunch'];
@@ -646,12 +646,6 @@ function unitOptionsFor(currentUnit: string) {
   return currentUnit && !BASE_UNIT_OPTIONS.includes(currentUnit)
     ? [currentUnit, ...BASE_UNIT_OPTIONS]
     : BASE_UNIT_OPTIONS;
-}
-
-function isBulkItem(entry: ItemCatalogEntry) {
-  const name = entry.item_name?.toLowerCase() ?? '';
-  const looksInactive = name.startsWith('inactive-') || entry.active === false;
-  return !looksInactive && name.includes('bulk');
 }
 
 // Typing into Qty/Rate used to call the save mutation on every keystroke,
@@ -770,7 +764,13 @@ export function ItemsTable({
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { data: rawCatalog = [], isLoading: catalogLoading } = useItemCatalog();
 
-  const catalog = useMemo(() => rawCatalog.filter(isBulkItem), [rawCatalog]);
+  const catalog = useMemo(
+    () => rawCatalog.filter((item) =>
+      !item.item_name.toLowerCase().startsWith('inactive-') &&
+      isEligibleCatalogItem(item)
+    ),
+    [rawCatalog]
+  );
 
   const filteredItems = useMemo(() => {
     if (!search.trim()) return items;

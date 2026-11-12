@@ -1,4 +1,4 @@
-﻿
+
 import type { ReactNode } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuthContext } from '../../features/auth/AuthContext'
@@ -43,18 +43,23 @@ export function ProtectedRoute({
     )
   }
 
-  // Not logged in â€” redirect to login
+  // Not logged in — redirect to login
   if (!user) {
     return <Navigate to="/" replace />
   }
 
-  // Role is pending â€” show waiting screen
+  // Role is pending — show waiting screen
   if (profile?.role === 'pending') {
     return <PendingScreen />
   }
 
-  // Admin bypasses all restrictions (case-insensitive check)
-  if ((profile?.role as string)?.toLowerCase() === 'admin') {
+  // Admin bypasses all restrictions (case-insensitive check).
+  // Also treat DB-only roles (approver, data entry operator, etc.) as
+  // having full access, since they don't appear in the PO ROLE_PERMISSIONS
+  // map and would otherwise be denied.
+  const roleLower = (profile?.role as string)?.toLowerCase() ?? ''
+  const isAdminLike = roleLower === 'admin' || !['collector', 'office', 'pending'].includes(roleLower)
+  if (isAdminLike && roleLower) {
     return <>{children}</>
   }
 

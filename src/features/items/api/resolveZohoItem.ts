@@ -18,6 +18,8 @@ export async function resolveZohoItem(zohoItem: ZohoItem): Promise<Item | null> 
       default_rate: zohoItem.purchase_rate,
       default_gst_percent: 0,
       zoho_item_id: zohoItem.zoho_item_id,
+      can_be_purchased: zohoItem.can_be_purchased,
+      can_be_sold: zohoItem.can_be_sold,
     })
     .select()
     .maybeSingle()

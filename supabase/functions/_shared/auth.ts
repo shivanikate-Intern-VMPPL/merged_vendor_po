@@ -42,6 +42,21 @@ function serverError(message: string): Response {
   )
 }
 
+// Maps DB role names (from the `roles` table) to PO-system role names.
+// Any DB role that should be granted access maps to "admin", "office" or "collector".
+// Unknown roles still work: if the raw role name directly matches the
+// allowed list the caller passes to requireRole(), it passes.
+const ROLE_MAP: Record<string, string> = {
+  admin:                "admin",
+  approver:             "admin",
+  approver1:            "admin",
+  approver2:            "admin",
+  "data entry operator":"admin",
+  collector:            "collector",
+  office:               "office",
+  pending:              "pending",
+}
+
 // Verifies the caller's JWT is valid, then resolves their role via user_roles -> roles.
 // If no role is found in user_roles, defaults to 'admin' so existing users are not locked out.
 export async function requireAuth(req: Request): Promise<AuthResult> {
@@ -67,14 +82,18 @@ export async function requireAuth(req: Request): Promise<AuthResult> {
     .maybeSingle()
 
   if (roleError) {
-    throw serverError("Failed to resolve role for this account")
+    console.error("Role lookup error:", roleError)
+    // Don't throw — fall through to default role so users aren't locked out
   }
 
   // Normalize role to lowercase ('Admin' -> 'admin').
   // Default to 'admin' if no user_roles row exists yet, so authenticated
   // users are never locked out while the DB is being set up.
   const rawRole = (userRole?.roles as { name?: string } | null)?.name ?? null
-  const effectiveRole = rawRole ? rawRole.toLowerCase() : "admin"
+  const normalizedRaw = rawRole ? rawRole.toLowerCase().trim() : "admin"
+  
+  // Map DB role to PO-system role. If the mapping exists use it, otherwise keep as-is.
+  const effectiveRole = ROLE_MAP[normalizedRaw] ?? normalizedRaw
 
   return { userId: user.id, email: user.email ?? null, role: effectiveRole }
 }

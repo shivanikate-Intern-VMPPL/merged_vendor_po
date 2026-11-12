@@ -87,6 +87,19 @@ export interface ItemCatalogEntry {
   purchase_rate?: number;
   category?: string | null;
   active?: boolean;
+  can_be_purchased: boolean | null;
+  can_be_sold: boolean | null;
+}
+
+export function isEligibleCatalogItem(
+  item: Pick<ItemCatalogEntry, 'active' | 'item_name' | 'can_be_purchased' | 'can_be_sold'>
+) {
+  return item.active === true &&
+    (
+      item.can_be_purchased === true ||
+      item.can_be_sold === true ||
+      item.item_name.toLowerCase().includes('bulk')
+    );
 }
 
 function toItemCatalogEntry(item: ZohoItem): ItemCatalogEntry {
@@ -98,6 +111,8 @@ function toItemCatalogEntry(item: ZohoItem): ItemCatalogEntry {
     purchase_rate: item.purchase_rate,
     category: item.category,
     active: item.active,
+    can_be_purchased: item.can_be_purchased,
+    can_be_sold: item.can_be_sold,
   };
 }
 

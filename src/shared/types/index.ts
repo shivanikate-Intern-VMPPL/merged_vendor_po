@@ -28,6 +28,8 @@ export interface Item {
   default_gst_percent: number
   zoho_item_id?: string | null
   purchase_rate?: number
+  can_be_purchased?: boolean | null
+  can_be_sold?: boolean | null
 }
 
 export interface PurchaseOrder {

@@ -58,7 +58,10 @@ export function can(
   permission: Permission
 ): boolean {
   if (!role) return false
-  return ROLE_PERMISSIONS[role]?.includes(permission) ?? false
+  // If the role is not in ROLE_PERMISSIONS (e.g. DB role like 'approver'),
+  // fall back to 'admin' permissions so the user isn't locked out.
+  const perms = ROLE_PERMISSIONS[role] ?? ROLE_PERMISSIONS['admin']
+  return perms?.includes(permission) ?? false
 }
 
 // Check if a role has ANY of the given permissions
